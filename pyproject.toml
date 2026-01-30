@@ -1,0 +1,9 @@
+[project]
+name = "PyHund-r8"
+version = "8.0.0"
+description = "Adaptive and modular OSINT web-scraping tool used to detect user-instances across the internet"
+readme = "ReadMe.md"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.32.5",
+]
