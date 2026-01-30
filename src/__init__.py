@@ -3,6 +3,25 @@
 # === Imports
 from argparse import ArgumentParser
 
+# === Functions
+
+def resolve_usernames(usernames:list[str]):
+    """
+    Used to unpack usernames stored in files, passed in by user in the form of @<filepath>
+    :param usernames: List of the username values passed in by user through command-line arguments
+    :yields str: Next username in file or argument sequence
+    """
+    for user in usernames:
+        if user.startswith('@'):
+            try:
+                with open(user[1:], 'r') as f:
+                    # Yield valid lines from file, stripping whitespace
+                    yield from ( line.strip() for line in f if line.strip() and not line.lstrip().startswith('#'))
+                continue
+            except FileNotFoundError:
+                pass # Treat as a literal username (e.g. @TwitterHandle)
+        yield user
+
 # === Parser Setup
 
 # Build Parser
@@ -23,16 +42,4 @@ PARSER.add_argument('/noerr', '/n', help="Strip any misses & exceptions that occ
 args = PARSER.parse_args()
 
 # Unpack passed in user files
-for username in args.usernames:
-    if username.startswith('@'):
-        try:
-            # Unpack all usernames in file and pass on any whitespace or lines that start with '#'
-            [ 
-                args.usernames.append(user) for user in open(username[1:], 'r').read().split('\n') 
-                if user != '' and not user.lstrip().startswith('#')
-            ]
-            # If no error is thrown then remove the filepath from `args.users`
-            args.usernames.remove(username)
-        except FileNotFoundError:
-            # If no file is found, be safe and assume that this is a part of the username, ie. '@CoolGuy'
-            continue
+args.usernames = list(resolve_usernames(args.usernames))
