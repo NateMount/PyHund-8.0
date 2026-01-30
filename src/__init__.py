@@ -21,3 +21,10 @@ PARSER.add_argument('/noerr', '/n', help="Strip any misses & exceptions that occ
 
 # Pre-build args 
 args = PARSER.parse_args()
+
+if len(args.usernames) == 1 and args.usernames[0].startswith('@'):
+    try:
+        with open(args.usernames[0][1:], 'r') as f:
+            args.usernames = f.read().split('\n')
+    except FileNotFoundError:
+        print(f"[PyHund::Err ~]: File [{args.usernames[0][1:]}] Not Found")
