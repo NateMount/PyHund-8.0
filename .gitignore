@@ -1,0 +1,23 @@
+# Logging Files
+*.log
+log.*
+
+# Personal Tooling
+*.pj
+.token
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+
+# Temp Files
+*.tmp
+tmp.*
