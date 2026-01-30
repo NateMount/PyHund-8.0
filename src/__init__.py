@@ -22,9 +22,17 @@ PARSER.add_argument('/noerr', '/n', help="Strip any misses & exceptions that occ
 # Pre-build args 
 args = PARSER.parse_args()
 
-if args.usernames[0].startswith('@'):
-    try:
-        with open(args.usernames[0][1:], 'r') as f:
-            args.usernames = f.read().split('\n')
-    except FileNotFoundError:
-        print(f"[PyHund::Err ~]: File [{args.usernames[0][1:]}] Not Found")
+# Unpack passed in user files
+for username in args.usernames:
+    if username.startswith('@'):
+        try:
+            # Unpack all usernames in file and pass on any whitespace or lines that start with '#'
+            [ 
+                args.usernames.append(user) for user in open(username[1:], 'r').read().split('\n') 
+                if user != '' and not user.lstrip().startswith('#')
+            ]
+            # If no error is thrown then remove the filepath from `args.users`
+            args.usernames.remove(username)
+        except FileNotFoundError:
+            # If no file is found, be safe and assume that this is a part of the username, ie. '@CoolGuy'
+            continue
