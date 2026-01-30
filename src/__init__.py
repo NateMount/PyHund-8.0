@@ -17,6 +17,7 @@ PARSER.add_argument('usernames', nargs='+')
 PARSER.add_argument('/verbose', '/v', help="Enable verbose output for program execution", action='store_true')
 PARSER.add_argument('/output', '/o', help="Sets expected output file in the form of name.ext", default='Report.txt')
 PARSER.add_argument('/threads', '/t', help="Set maximum number of threads to be issued during program execution", type=int, default=3)
+PARSER.add_argument('/noerr', '/n', help="Strip any misses & exceptions that occur during program execution", action="store_true")
 
 # Pre-build args 
 args = PARSER.parse_args()
