@@ -119,10 +119,9 @@ class PyHunter:
 
     def _test_cookies(self, username:str, mapping:dict) -> bool:
         tmp_session = Session()
-        url:str = self.url.format(username)
 
         try:
-            response = tmp_session.get(url, headers=self.headers, timeout=10)
+            response = tmp_session.get(self.url.format(username), headers=self.headers, timeout=10)
         except RequestException:
             return True
         
