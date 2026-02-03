@@ -10,12 +10,12 @@ from src.scanner import PyHundScanner
 # === Main Execution
 
 def main():
-    pyhund_scanner:PyHundScanner = PyHundScanner(args.usernames)
+    pyhund_scanner:PyHundScanner = PyHundScanner()
     if args.verbose:
         pyhund_scanner.log = lambda *msg: print(f"[PyHund.Scanner ~]: {msg}")
 
     pyhund_scanner.load_manifest(args.manifest)
-    pyhund_scanner.run(args.usernames, args.threads or 1)
+    pyhund_scanner.run(args.usernames, args.threads or 3)
 
 if __name__ == '__main__':
     main()
