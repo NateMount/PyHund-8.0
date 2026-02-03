@@ -7,7 +7,6 @@
 
 from sys import argv
 from requests import Session, Response, RequestException
-from random import choice
 
 # === PyHunter Class
 class PyHunter:
@@ -103,12 +102,17 @@ class PyHunter:
             }
             method_found = True
         
-        if not method_found and '404' in invalid_response.text:
-            mapping['check_type'] = 'content'
-            mapping['criteria'] = {
-                'valid': '@@@Unknown@@@',
-                'invalid': '404'
-            }
+        if not method_found:
+            for key_string in ('404', 'Error', 'Not Found'):
+                if key_string in invalid_response.text and key_string not in valid_response.text:
+                    mapping['check_type'] = 'key-string'
+                    mapping['criteria'] = {
+                        'valid': '@@@Unknown@@@',
+                        'invalid': key_string
+                    }
+                else:
+                    self.log("Failed to find Mapping")
+                    return {'Error': 'No Valid Method Found'}
         
         if method_found:
             if not self._test_cookies(valid_user, mapping):
