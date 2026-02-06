@@ -5,19 +5,48 @@
 
 # === Imports
 from sys import argv
+#from tools.pyhunter import PyHunter
+
+# === Globals
+
+# Tags: 
+#   - Social (social media)
+#   - Finance (financial transactions / stock or crypto trading / crypto wallet)
+#   - Education (online learning / training platforms)
+#   - Professional (business accounts)
+#   - Forum (online form / chat room)
+#   - Adult (pornographic / dating content)
+#   - Communication (online messaging platforms)
+
+TAG_MANIFEST:tuple = (
+    (("social", "finance"), "https://venmo.com/u/{}"),
+    (("professional", "social"), "https://www.linkedin.com/in/{}/")
+)
 
 # === AutoMan Class
 
 class AutoMan:
 
     def __init__(self):
-        self.log = lambda *_: None
+        self.log = lambda _, __: None
     
     def build_from_arr(self, site_array:list[str]) -> None:
-        pass
+        
+        for site_element in site_array:
+            if '{}' not in site_element:
+                self.log('Warn', f"URL [{site_element}] does not contain formatting braces, {{}} - Skipping")
+                continue
 
     def build_from_tag(self, tag_array:list[str]) -> None:
-        pass
+        
+        site_array:list[str] = []
+        [
+            [ site_array.append(site[1]) for tag in site[0] if tag in tag_array ] 
+        for site in TAG_MANIFEST ]
+
+        print(site_array)
+
+        self.build_from_arr(site_array=site_array)
 
     def exec(self, command:str) -> None:
         match command.lower():
@@ -26,25 +55,24 @@ class AutoMan:
                     print("[AutoMan::Err ~]: No build list or list of sites provided")
                     return
                 
-                if argv[3].startswith('@'):
+                if argv[2].startswith('@'):
                     try:
-                        site_arr:list[str] = open(argv[3][1:], 'r').read().split('\n')
+                        site_arr:list[str] = open(argv[2][1:], 'r').read().split('\n')
                     except FileNotFoundError:
-                        self.log("Err", f"Cannot open file @[{argv[3][1:]}]")
+                        self.log("Err", f"Cannot open file @[{argv[2][1:]}]")
                         return
                 else:
-                    site_arr:list[str] = argv[3:]
+                    site_arr:list[str] = argv[2:]
                 
                 self.build_from_arr(site_arr)
 
             case 'new':
                 if len(argv) < 3:
                     print("[AutoMan::Warn ~]: No tags provided, building default list")
-                    tags:list[str] = []
+                    self.build_from_arr([ site[1] for site in TAG_MANIFEST ])
+                    return
                 else:
-                    tags:list[str] = argv[3:]
-                
-                self.build_from_tag(tags)
+                    self.build_from_tag(argv[2:])
 
             case 'tags':
                 print("[AutoMan::IDX ~]: Tags")
@@ -69,4 +97,4 @@ def main() -> None:
     automan.exec(argv[1])
 
 if __name__ == '__main__':
-    AutoMan()
+    main()
