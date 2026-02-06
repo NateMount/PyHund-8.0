@@ -78,7 +78,7 @@ class PyHunter:
         method_found:bool = False
 
         if valid_response.status_code != invalid_response.status_code:
-            mapping['check_type'] = 'status_code'
+            mapping['check_type'] = 'status-code'
             mapping['criteria'] = {
                 'valid': valid_response.status_code, 
                 'invalid':invalid_response.status_code
