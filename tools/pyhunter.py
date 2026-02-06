@@ -19,7 +19,7 @@ class PyHunter:
         "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36",
     )
 
-    def __init__(self, url:str):
+    def __init__(self, url:str = ""):
         self.log = lambda msg: None
         self.session = Session()
         self.headers = {
