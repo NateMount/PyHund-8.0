@@ -72,14 +72,14 @@ class PyHunter:
             "url": self.url,
             "headers": self.headers,
             "cookies": self.session.cookies.get_dict(),
-            "check_type": None,
+            "check-type": None,
             "criteria": {}
         }
 
         method_found:bool = False
 
         if valid_response.status_code != invalid_response.status_code:
-            mapping['check_type'] = 'status-code'
+            mapping['check-type'] = 'status-code'
             mapping['criteria'] = {
                 'valid': valid_response.status_code, 
                 'invalid':invalid_response.status_code
@@ -88,7 +88,7 @@ class PyHunter:
             method_found = True
         
         if not method_found and valid_response.url.replace(valid_user, '@@@@@') != invalid_response.url.replace(invalid_user, '@@@@@'):
-            mapping["check_type"] = 'url'
+            mapping["check-type"] = 'url'
             mapping['criteria'] = {
                 'valid': valid_response.url.replace(valid_user, '@@@@@'),
                 'invalid': invalid_response.url.replace(invalid_user, '@@@@@')
@@ -96,7 +96,7 @@ class PyHunter:
             method_found = True
         
         if not method_found and (valid_len := len(valid_response.text.replace(valid_user, '@@@@@'))) != (invalid_len := len(invalid_response.text.replace(invalid_user, '@@@@@'))):
-            mapping['check_type'] = 'length'
+            mapping['check-type'] = 'length'
             mapping['criteria'] = {
                 'valid': valid_len,
                 'invalid': invalid_len
@@ -106,7 +106,7 @@ class PyHunter:
         if not method_found:
             for key_string in ('404', 'Error', 'Not Found'):
                 if key_string in invalid_response.text and key_string not in valid_response.text:
-                    mapping['check_type'] = 'key-string'
+                    mapping['check-type'] = 'key-string'
                     mapping['criteria'] = {
                         'valid': '@@@Unknown@@@',
                         'invalid': key_string
@@ -130,7 +130,7 @@ class PyHunter:
         except RequestException:
             return True
         
-        match mapping['check_type']:
+        match mapping['check-type']:
             case 'status_code':
                 if response.status_code != mapping['criteria']['valid']:
                     self.log(f"Cookies Required, Status Code [{response.status_code}]")
