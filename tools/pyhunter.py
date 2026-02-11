@@ -69,6 +69,7 @@ class PyHunter:
             return {'Error': 'Cannot Connect to InValid User Profile'}
         
         mapping:dict = {
+            "url": self.url,
             "headers": self.headers,
             "cookies": self.session.cookies.get_dict(),
             "check_type": None,
