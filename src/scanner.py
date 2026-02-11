@@ -76,7 +76,7 @@ class PyHundScanner:
         print(self.scan_data)
     
     @staticmethod
-    def _validate_response(response_data:Response, user_instance:str, verification_method:str, verification_keys:dict) -> str:
+    def _validate_response(response_data:Response, user_instance:str, verification_method:str, verification_keys:dict) -> bool:
         """
         Uses established verification methods and keys to tag this connection as valid / invalid / unknown
         
@@ -87,31 +87,21 @@ class PyHundScanner:
         :return: Valid / Invalid / Unknown 
         """
 
-
         match verification_method:
             case 'status-code':
-                if response_data.status_code == verification_keys['valid']:
-                    return 'Valid' 
-                return 'Invalid'
+                return response_data.status_code == verification_keys['valid']
 
             case 'url':
-                if response_data.url.replace(user_instance, '@@@@@') == verification_keys['valid']:
-                    return 'Valid'
-                return 'Invalid'
+                return response_data.url.replace(user_instance, '@@@@@') == verification_keys['valid']
 
             case 'length':
                 response_len:int = len(response_data.text.replace(user_instance, '@@@@@'))
-                if abs(response_len - verification_keys['valid']) < abs(response_len - verification_keys['invalid']):
-                    return 'Valid'
-                return 'Invalid'
+                return abs(response_len - verification_keys['valid']) < abs(response_len - verification_keys['invalid'])
 
             case 'key-string':
-                if verification_keys['invalid'] in response_data.text.replace(user_instance, '@@@@@'):
-                    return 'Invalid'
-                return 'Valid'
+                return verification_keys['invalid'] in response_data.text.replace(user_instance, '@@@@@')
 
-            case _:
-                return 'Unknown'
+            case _: return False
 
 
 
@@ -141,12 +131,12 @@ class PyHundScanner:
                 continue
 
             self.scan_data[user_instance][site_name] = (
-                self._validate_response(
+                {True: 'Valid', False: 'Invalid'}[self._validate_response(
                     response_data=response_data, 
                     user_instance=user_instance,
                     verification_method=site_metadata['check-type'], 
                     verification_keys=site_metadata['criteria']
-                ),
+                )],
                 site_metadata['url'].format(user_instance),
                 response_data.status_code,
                 site_metadata['check-type'],
