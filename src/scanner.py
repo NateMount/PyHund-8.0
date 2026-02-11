@@ -3,6 +3,7 @@
 # === Imports
 
 from json import load
+from src import args
 from threading import Lock, Thread
 from requests import get, RequestException, Response
 
@@ -29,10 +30,15 @@ class PyHundScanner:
 
         self.log(f"Starting scan with Users[{len(user_instances)}] & ThreadCount[{thread_count}]")
 
-        for user_instance in user_instances:
-            self._scan_instance(user_instance=user_instance)
+        for user_instance in user_instances: self._scan_instance(user_instance=user_instance)
 
     def load_manifest(self, manifest_path:str):
+        """
+        Attempts to load manifest site data from specified path
+        
+        :param manifest_path: Full path to the desired manifest file (json)
+        """
+
         try:
             self.manifest = load(open(manifest_path, 'r'))
         except FileNotFoundError:
@@ -48,8 +54,25 @@ class PyHundScanner:
 
         self.scan_data[user_instance] = {}
 
-        for site in self.manifest.keys():
-            pass
+        site_blocks:list[list[str]] = []
+        chunk_size:int = len(self.manifest)//args.threads
+        site_names:list[str] = [ site for site in self.manifest ]
+
+        for i in range(args.threads-1):
+            site_blocks.append(site_names[chunk_size*i:chunk_size*(i+1)])
+        site_blocks.append(site_names[chunk_size*args.threads:])
+
+        threads = [
+            Thread(
+                target=self._scan_site_block, 
+                args=(user_instance, block)
+            ) for block in site_blocks
+        ]
+
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        print(self.scan_data)
     
     @staticmethod
     def _validate_response(response_data:Response, user_instance:str, verification_method:str, verification_keys:dict) -> str:
@@ -67,7 +90,7 @@ class PyHundScanner:
         match verification_method:
             case 'status-code':
                 if response_data.status_code == verification_keys['valid']:
-                    return 'Valid'
+                    return 'Valid' 
                 return 'Invalid'
 
             case 'url':
@@ -91,7 +114,7 @@ class PyHundScanner:
 
 
 
-    def _scan_site_block(self, user_instance:str, site_block:list[str]) -> dict[str, tuple]:
+    def _scan_site_block(self, user_instance:str, site_block:list[str]) -> None:
         """
         Allows for fragmentation of scan space into threaded blocks, allowinf for faster 
         compute speeds
@@ -100,23 +123,21 @@ class PyHundScanner:
         :param site_block: List containing slice of all sites to be scanned
         """
 
-        block_response_data:dict[str, tuple] = {}
-
         for site_name in site_block:
             self.log(f"Scanning: [{user_instance}@{site_name}]")
             site_metadata:dict = self.manifest[site_name]
             try:
                 response_data:Response = get(
-                    site_metadata[site_name]['url'].format(user_instance),
+                    site_metadata['url'].format(user_instance),
                     headers=site_metadata['headers'],
                     cookies=site_metadata['cookies']
                 )
             except RequestException as err:
                 self.log(f"Error Encountered:\n\tError: {err}\n\tTarget: {site_metadata['url'].format(user_instance)}")
-                block_response_data[site_name] = ('Error', 'Cannot Connect to Site')
+                self.scan_data[user_instance][site_name] = ('Error', 'Cannot Connect to Site')
                 continue
 
-            block_response_data[site_name] = (
+            self.scan_data[user_instance][site_name] = (
                 self._validate_response(
                     response_data=response_data, 
                     user_instance=user_instance,
@@ -128,5 +149,3 @@ class PyHundScanner:
                 site_metadata['check-type'],
                 site_metadata['criteria']
             )
-
-        return block_response_data
