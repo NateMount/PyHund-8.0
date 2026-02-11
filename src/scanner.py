@@ -67,6 +67,7 @@ class PyHundScanner:
                 target=self._scan_site_block, 
                 args=(user_instance, block)
             ) for block in site_blocks
+            if len(block) > 0
         ]
 
         [t.start() for t in threads]
@@ -122,6 +123,8 @@ class PyHundScanner:
         :param user_instance: String representing the user instance to be applied
         :param site_block: List containing slice of all sites to be scanned
         """
+
+        print(site_block)
 
         for site_name in site_block:
             self.log(f"Scanning: [{user_instance}@{site_name}]")
