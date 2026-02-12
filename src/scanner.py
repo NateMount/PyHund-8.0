@@ -13,6 +13,7 @@ class PyHundScanner:
 
     def __init__(self):
         self.manifest:dict = {}
+        self.site_arr:list[str] = []
         self.scan_data:dict = {}
 
         self.log = lambda *msg : None
@@ -43,6 +44,7 @@ class PyHundScanner:
 
         try:
             self.manifest = load(open(manifest_path, 'r'))
+            self.site_arr = [ site_name for site_name in self.manifest ]
         except FileNotFoundError:
             print(f"[PyHund.Err ~]: Cannot load manifest with path [{manifest_path}]")
             exit(-1)
@@ -60,13 +62,12 @@ class PyHundScanner:
 
         site_blocks:list[list[str]] = []
         chunk_size:int = len(self.manifest)//args.threads
-        site_names:list[str] = [ site for site in self.manifest ]
 
         for i in range(args.threads-1):
             site_blocks.append(
-                site_names[chunk_size*i:chunk_size*(i+1)]
+                self.site_arr[chunk_size*i:chunk_size*(i+1)]
             )
-        site_blocks.append(site_names[chunk_size*args.threads:])
+        site_blocks.append(self.site_arr[chunk_size*args.threads:])
 
         threads = [
             Thread(
@@ -78,8 +79,6 @@ class PyHundScanner:
 
         [t.start() for t in threads]
         [t.join() for t in threads]
-
-        print(self.scan_data)
     
     @staticmethod
     def _validate_response(response_data:Response, user_instance:str, verification_method:str, verification_keys:dict) -> bool:
