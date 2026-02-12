@@ -3,4 +3,4 @@
 class PyHundReporter:
     
     def build_report(self, raw_scan:dict):
-        return NotImplemented
+        print(raw_scan)
