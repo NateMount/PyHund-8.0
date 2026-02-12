@@ -13,7 +13,7 @@ from src.reporter import PyHundReporter
 def main():
     pyhund_scanner:PyHundScanner = PyHundScanner()
     if args.verbose:
-        pyhund_scanner.log = lambda *msg: print(f"[PyHund.Scanner ~]: {msg}")
+        pyhund_scanner.log = lambda msg: print(f"[PyHund.Scanner ~]: {msg}")
 
     pyhund_scanner.load_manifest(args.manifest)
     raw_scan_data:dict = pyhund_scanner.run(args.usernames, args.threads or 3)

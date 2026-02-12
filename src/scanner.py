@@ -16,7 +16,7 @@ class PyHundScanner:
         self.site_arr:list[str] = []
         self.scan_data:dict = {}
 
-        self.log = lambda *msg : None
+        self.log = lambda msg : None
     
     def run(self, user_instances:list[str], thread_count:int) -> dict:
         """
