@@ -119,8 +119,6 @@ class PyHundScanner:
         :param site_block: List containing slice of all sites to be scanned
         """
 
-        print(site_block)
-
         for site_name in site_block:
             self.log(f"Scanning: [{user_instance}@{site_name}]")
             site_metadata:dict = self.manifest[site_name]
@@ -135,13 +133,18 @@ class PyHundScanner:
                 self.scan_data[user_instance][site_name] = ('Error', 'Cannot Connect to Site')
                 continue
 
+            validation_response:bool = self._validate_response(
+                response_data=response_data, 
+                user_instance=user_instance,
+                verification_method=site_metadata['check-type'], 
+                verification_keys=site_metadata['criteria']
+            )
+
+            # Hacky solution to avalid conditionals :)
+            {True: self.log, False:lambda msg: None}[validation_response](site_metadata['url'].format(user_instance))
+
             self.scan_data[user_instance][site_name] = (
-                {True: 'Valid', False: 'Invalid'}[self._validate_response(
-                    response_data=response_data, 
-                    user_instance=user_instance,
-                    verification_method=site_metadata['check-type'], 
-                    verification_keys=site_metadata['criteria']
-                )],
+                {True: 'Valid', False: 'Invalid'}[validation_response],
                 site_metadata['url'].format(user_instance),
                 response_data.status_code,
                 site_metadata['check-type'],
