@@ -4,11 +4,8 @@
 
 from json import load
 from src import args
-from threading import Lock, Thread
+from threading import Thread
 from requests import get, RequestException, Response
-
-# === Globals
-LOCK:Lock = Lock()
 
 # === PyHund Scanner Class
 
@@ -20,7 +17,7 @@ class PyHundScanner:
 
         self.log = lambda *msg : None
     
-    def run(self, user_instances:list[str], thread_count:int):
+    def run(self, user_instances:list[str], thread_count:int) -> dict:
         """
         Executes scan of all provided user instances
         
@@ -30,7 +27,12 @@ class PyHundScanner:
 
         self.log(f"Starting scan with Users[{len(user_instances)}] & ThreadCount[{thread_count}]")
 
-        for user_instance in user_instances: self._scan_instance(user_instance=user_instance)
+        for user_instance in user_instances: 
+            self._scan_instance(user_instance=user_instance)
+
+        self.log(f"Scan Terminated Successfully")
+
+        return self.scan_data
 
     def load_manifest(self, manifest_path:str):
         """
@@ -52,6 +54,8 @@ class PyHundScanner:
         :param user_instance: String representing targeted user instance
         """
 
+        # TODO: Maybe implement polling instead with each thread just grabbing next availible site in que
+
         self.scan_data[user_instance] = {}
 
         site_blocks:list[list[str]] = []
@@ -59,7 +63,9 @@ class PyHundScanner:
         site_names:list[str] = [ site for site in self.manifest ]
 
         for i in range(args.threads-1):
-            site_blocks.append(site_names[chunk_size*i:chunk_size*(i+1)])
+            site_blocks.append(
+                site_names[chunk_size*i:chunk_size*(i+1)]
+            )
         site_blocks.append(site_names[chunk_size*args.threads:])
 
         threads = [
