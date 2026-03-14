@@ -17,7 +17,7 @@ def main():
 
     pyhund_scanner.load_manifest(args.manifest)
     raw_scan_data:dict = pyhund_scanner.run(args.usernames, args.threads or 3)
-    PyHundReporter().build_report(raw_scan_data)
+    PyHundReporter().build_report(raw_scan_data, None)
 
 if __name__ == '__main__':
     main()
