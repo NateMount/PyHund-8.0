@@ -28,8 +28,9 @@ class PyHundScanner:
 
         self.log(f"Starting scan with Users[{len(user_instances)}] & ThreadCount[{thread_count}]")
 
-        for user_instance in user_instances: 
-            self._scan_instance(user_instance=user_instance)
+        [
+            self._scan_instance(user_instance, thread_count) for user_instance in user_instances
+        ]
 
         self.log(f"Scan Terminated Successfully")
 
@@ -49,7 +50,7 @@ class PyHundScanner:
             print(f"[PyHund.Err ~]: Cannot load manifest with path [{manifest_path}]")
             exit(-1)
     
-    def _scan_instance(self, user_instance:str) -> None:
+    def _scan_instance(self, user_instance:str, thread_count:int = 3) -> None:
         """
         Scans an array of sites derived from Manifest for selected user instance
         
@@ -59,22 +60,13 @@ class PyHundScanner:
         # TODO: Maybe implement polling instead with each thread just grabbing next availible site in que
 
         self.scan_data[user_instance] = {}
-
-        site_blocks:list[list[str]] = []
-        chunk_size:int = len(self.manifest)//args.threads
-
-        for i in range(args.threads-1):
-            site_blocks.append(
-                self.site_arr[chunk_size*i:chunk_size*(i+1)]
-            )
-        site_blocks.append(self.site_arr[chunk_size*args.threads:])
+        self._tmp_site_arr = self.site_arr[:]
 
         threads = [
             Thread(
                 target=self._scan_site_block, 
-                args=(user_instance, block)
-            ) for block in site_blocks
-            if len(block) > 0
+                args=(user_instance,)
+            ) for _ in range(thread_count)
         ]
 
         [t.start() for t in threads]
@@ -110,7 +102,7 @@ class PyHundScanner:
 
 
 
-    def _scan_site_block(self, user_instance:str, site_block:list[str]) -> None:
+    def _scan_site_block(self, user_instance:str) -> None:
         """
         Allows for fragmentation of scan space into threaded blocks, allowinf for faster 
         compute speeds
@@ -118,7 +110,41 @@ class PyHundScanner:
         :param user_instance: String representing the user instance to be applied
         :param site_block: List containing slice of all sites to be scanned
         """
+        self.log(user_instance)
+        
+        while self._tmp_site_arr != []:
 
+            site_name:str = self._tmp_site_arr.pop(0)
+            site_meta:dict = self.manifest[site_name]
+
+            try:
+                response_pack:Response = get(
+                    site_meta['url'].format(user_instance),
+                    headers=site_meta['headers'],
+                    cookies=site_meta['cookies']
+                )
+            except RequestException as err:
+                self.log(f"Error Occured:\n\tError: {err}\n\tTarget: {site_meta['url'].format(user_instance)}")
+                self.scan_data[user_instance][site_name] = ('Error', 'Cannot Connect to Target')
+                continue
+
+            validation_check:bool = self._validate_response(
+                response_pack, user_instance,
+                verification_method=site_meta['check-type'],
+                verification_keys=site_meta['criteria']
+            )
+
+            {True: self.log, False: lambda msg: None}[validation_check](site_meta['url'].format(user_instance))
+
+            self.scan_data[user_instance][site_name] = (
+                {True: 'Valid', False: 'Invalid'}[validation_check],
+                site_meta['url'].format(user_instance),
+                response_pack.status_code,
+                site_meta['check-type'], site_meta['criteria']
+            )
+
+
+        """
         for site_name in site_block:
             self.log(f"Scanning: [{user_instance}@{site_name}]")
             site_metadata:dict = self.manifest[site_name]
@@ -150,3 +176,4 @@ class PyHundScanner:
                 site_metadata['check-type'],
                 site_metadata['criteria']
             )
+        """
